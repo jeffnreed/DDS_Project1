@@ -11,7 +11,8 @@ output: html_document
 # Code purpose
 # The code below is broken down into 2 categories.  The information preceded by # is explanatory information while the other information is the actual code used to perform our data analysis.
 
-# load pertinent code libraries
+# Load pertinent code libraries
+```{r}
 library(ggplot2)
 library(magrittr)
 library(dplyr)
@@ -21,7 +22,10 @@ library(class)
 library(caret)
 library(e1071)
 library(readr)
+```
 
+# Load csv files
+```{r}
 # load the Brewery csv file
 Breweries = read.csv(file.choose(), header = TRUE)
 summary(Breweries)
@@ -29,8 +33,10 @@ summary(Breweries)
 # load the Beers csv file
 Beers = read.csv(file.choose(), header = TRUE)
 summary(Beers)
+```
 
 # Question 1:  
+```{r}
 # How many breweries in each state?  
 Breweries %>% count(State, sort = TRUE)
 # We then exported the data to excel to format into a table given the large amount of data
@@ -39,7 +45,10 @@ Breweries %>% count(State, sort = TRUE)
 # ????Not sure if this graph was useful as it had so many data points so didn't include.  Any thoughts on how to visually answer this question.
 # ?????Breweries %>% ggplot(aes(x = State)) + geom_bar(color="black", fill = "red", binwidth = 20)
 
+```
+
 # Question 2:  
+```{r}
 # Merge the two data files provided by the client so that we can perform analysis on a single document and perform a deeper and more thorough analysis
 # Steps taken:
 # Change column names in Beers file to match up with Brewery file
@@ -56,14 +65,16 @@ summary(Beer_Brew_Combo)
 head(Beer_Brew_Combo, 6)
 # Print last 6 rows in merged data frame
 tail(Beer_Brew_Combo, 6)
-
+```
 
 # Question 3: 
+```{r}
 # Address the missing values in each column.
 # ????Logan:  not exactly sure what to do here.  I removed it below but am completely open to thoughts
-
+```
 
 # Question 4:  
+```{r}
 # Compute the median alcohol content (ABV) and international bitterness unit (IBU) for each state. 
 # Plot a bar chart to compare.
 # Create new data from that removes NA's in ABV column then calculates median for each state
@@ -82,15 +93,20 @@ BBC_Median_IBU %>% ggplot(aes(x = State, y = Median_IBU)) + geom_bar(stat = 'ide
 print(BBC_Median_ABV)
 print(BBC_Median_IBU)
 
+```
+
 # Question 5:  
+```{r}
 # Which state has the maximum alcoholic (ABV) beer? Colorado
 Beer_Brew_Combo[which.max(Beer_Brew_Combo$ABV),]
 
 # Which state has the most bitter (IBU) beer? Oregon
 Beer_Brew_Combo[which.max(Beer_Brew_Combo$IBU),]
 
+```
 
 #Question 6: 
+```{r}
 # Comment on the summary statistics and distribution of the ABV variable.
 # Count number of NA's and total ABV = 62
 sum(is.na(Beer_Brew_Combo$ABV))
@@ -104,8 +120,10 @@ Beer_Brew_Combo %>% filter(!is.na(ABV)) %>% ggplot(aes(x = ABV)) + geom_histogra
 Beer_Brew_Combo %>% filter(!is.na(ABV)) %>% ggplot(aes(x = ABV)) + geom_boxplot()
 # same here.....would probably be good to add to this graph with summary stats, just didn't get there yet, and is another one that needs to be cleaned up
 
+```
 
 # Question 7:  
+```{r}
 # Is there an apparent relationship between the bitterness of the beer (IBU) and its alcoholic content (ABV)? Draw a scatter plot.  Make your best judgment of a relationship and EXPLAIN your answer.
 # Correlation coefficient = 0.671
 # The scatter plot clearly evidences a positive correlation / relationship
@@ -114,8 +132,10 @@ Beer_Brew_Combo %>% filter(!is.na(ABV) | !is.na(IBU)) %>% select(ABV, IBU) %>% g
 Beer_Brew_Combo %>% filter(!is.na(ABV) | !is.na(IBU)) %>%  ggplot(aes(x = ABV, y = IBU)) + geom_point() + geom_smooth()
 # This relationship makes me wonder if there is a way to use the ABV values to estimate IBU blanks and vice versa.....maybe this is what he is hinting at....I tried messing with this in excel by estimating an ABV value based on the IBU value but didn't make any headway....
 
+```
 
 # Question 8:  
+```{r}
 # Budweiser would also like to investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) and other types of Ale (any beer with “Ale” in its name other than IPA).  You decide to use KNN classification to investigate this relationship.  Provide statistical evidence one way or the other. 
 #In addition, while you have decided to use KNN to investigate this relationship (KNN is required) you may also feel free to supplement your response to this question with any other methods or techniques you have learned.  Creativity and alternative solutions are always encouraged. 
 # I just did KNN so if you want to do NB then have at it!
@@ -164,8 +184,11 @@ classifications = knn.cv(Beers_Ale_Adj[,c(4,5)],Beers_Ale_Adj$Ale_Type, prob = T
 table(classifications,Beers_Ale_Adj$Ale_Type)
 confusionMatrix(table(classifications,Beers_Ale_Adj$Ale_Type))
 
+```
 
-# Question 9: Knock their socks off!  Find one other useful inference from the data that you feel Budweiser may be able to find value in.  You must convince them why it is important and back up your conviction with appropriate statistical evidence.
+# Question 9: 
+```{r}
+# Knock their socks off!  Find one other useful inference from the data that you feel Budweiser may be able to find value in.  You must convince them why it is important and back up your conviction with appropriate statistical evidence.
 # Some ideas to give them as to where they can focus their sales efforts: 
 # Region breakdown - where should they focus
 # Analyze cities in top 10 to know where to focus or do this after looking at region
@@ -195,3 +218,5 @@ Beer_Brew_Region %>%  count(City, sort = TRUE)
 head(Beer_Brew_Region %>%  count(City, sort = TRUE), 20)
 
 # maybe we could pick out the top cities in the West Region to suggest focusing on????  I'm open to whatever for this one......
+```
+
