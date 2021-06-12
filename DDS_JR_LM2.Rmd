@@ -109,6 +109,9 @@ ABV_IBU_Medians %>%
 Beer_Brew_Combo %>% arrange(-ABV) %>% select(Beer_Name, ABV, State) %>% head(1)
 Beer_Brew_Combo %>% arrange(-IBU) %>% select(Beer_Name, IBU, State) %>% head(1)
 ```
+### Colorado has the beer with the highest ABV at 0.128.
+### Oregon has the beer with the highest IBU at 138.
+
 ## Comment on the summary statistic and distribution of the ABV variable
 ```{r}
 summary(Beer_Brew_Combo$ABV)
