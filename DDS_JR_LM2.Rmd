@@ -1,0 +1,154 @@
+---
+title: "DDS_Project_JR_LM"
+author: "Jeff Reed, Logan Miller"
+date: "6/10/2021"
+output: 
+  html_document:
+    toc: true #specifies output settings for output types, this one specifies no table of contents
+  pdf_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set
+# include = FALSE means code chuck won't be included in presentation documents
+#knitr::opts_chunk$set sets global options for code chucks, echo = TRUE means by default all chunk will show in final
+```
+
+
+## Import Relevant Packages
+```{r}
+
+library(ggplot2) 
+library(magrittr) 
+library(dplyr) 
+library(GGally)
+library(tibble) 
+library(class) 
+library(caret) 
+library(e1071)
+library(readr)
+library(ggthemes)
+
+```
+
+## Load Data
+
+```{r results='hide'}
+Breweries = read.csv(file.choose())
+
+Beers = read.csv(file.choose())
+
+```
+
+## Inspect Data
+```{r}
+head(Breweries)
+head(Beers)
+```
+
+## Counting the breweries in each state
+```{r}
+Breweries %>% count(State, sort = TRUE)
+```
+
+## Merging beer data with brewery data
+```{r}
+# Change column name in Brewery file to clarify names
+
+Beers = Beers %>% rename(Beer_Name = Name, Brew_ID = Brewery_id)
+
+colnames(Breweries)[2] = "Brewery_Name" 
+
+Beer_Brew_Combo = merge(Beers,Breweries,c("Brew_ID")) 
+
+
+```
+
+## First and last 6 rows
+```{r}
+
+head(Beer_Brew_Combo, 6)
+tail(Beer_Brew_Combo, 6)
+```
+
+## Check missing values in each column
+
+```{r}
+sapply(Beer_Brew_Combo, function(x) sum(is.na(x)))
+```
+### We can see that only the ABV and IBU columns have missing values. For now we will keep them in but they may need to be filtered out later to avoid misleading results.
+
+## Computing and plotting median ABV and IBU
+```{r}
+
+
+ABV_IBU_Medians = Beer_Brew_Combo %>% 
+  group_by (State) %>% 
+  summarise(Median_ABV = median(ABV, na.rm = TRUE), # na.rm filters out the missing values when computing value
+            Median_IBU = median(IBU, na.rm = TRUE)) 
+
+ABV_IBU_Medians %>% 
+  ggplot(aes(x = reorder(State, -Median_ABV,), y = Median_ABV)) + 
+  geom_bar(stat = 'identity', fill = 'dark green') +
+  labs(x = 'State', y = 'Median ABV', title = 'Median ABV by State') +
+  theme_economist() +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 270, hjust = 1)) 
+
+ABV_IBU_Medians %>% 
+  ggplot(aes(x = reorder(State, -Median_IBU,), y = Median_IBU)) + 
+  geom_bar(stat = 'identity', fill = 'dark green') +
+  labs(x = 'State', y = 'Median IBU', title = 'Median IBU by State') +
+  theme_economist() +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 270, hjust = 1))
+ 
+```
+## Which state has the maximum alcoholic beer? Which state has the most bitter beer?
+```{r}
+Beer_Brew_Combo %>% arrange(-ABV) %>% select(Beer_Name, ABV, State) %>% head(1)
+Beer_Brew_Combo %>% arrange(-IBU) %>% select(Beer_Name, IBU, State) %>% head(1)
+```
+## Comment on the summary statistic and distribution of the ABV variable
+```{r}
+summary(Beer_Brew_Combo$ABV)
+
+data.frame(Mean = round(mean(Beer_Brew_Combo$ABV, na.rm = TRUE), 3), 
+           Trimmed_Mean = round(mean(Beer_Brew_Combo$ABV, na.rm = TRUE, trim = 0.1), 3),
+           Median = median(Beer_Brew_Combo$ABV, na.rm = TRUE),
+           Standard_Deviation = round(sd(Beer_Brew_Combo$ABV, na.rm = TRUE), 3))
+
+Beer_Brew_Combo %>% 
+  ggplot(aes(x = ABV)) + 
+  geom_histogram(fill = 'dark green', color = 'black') +
+  labs(x = 'ABV', y = '',  title = 'Histogram of ABV') +
+  theme_economist() +
+  theme(axis.text.y = element_blank(), axis.title.x = element_text(size = 15),legend.position = 'none')
+
+Beer_Brew_Combo %>% 
+  ggplot(aes(x = ABV)) + 
+  geom_boxplot(fill = 'dark green', color = 'black') +
+  labs(x = 'ABV', y = '',  title = 'Boxplot of ABV') +
+  theme_economist() +
+  theme(axis.text.y = element_blank(), axis.title.x = element_text(size = 15),legend.position = 'none')
+```
+
+### The lack of difference between the mean and the 10% trimmed mean tells us there are minimal outliers in the data.
+### Looking at the histogram and boxplot, it is apparent the data is approximately normally distributed
+
+## Is there a relationship between IBU and ABV?
+```{r}
+
+cor(x = Beer_Brew_Combo$IBU, y = Beer_Brew_Combo$ABV, method = 'pearson', use = 'na.or.complete')
+
+Beer_Brew_Combo %>% 
+  ggplot(aes(x = IBU, y = ABV)) +
+  geom_point(color = 'dark green') +
+  labs(title = 'Scatter Plot of IBU and ABV') +
+  theme_economist() +
+  theme(axis.title.y = element_text(size = 15), axis.title.x = element_text(size = 15),legend.position = 'none')
+```
+
+### Based on a visual inspection of the scatter plot, there appears to be a slight positive correlation between IBU and ABV.
+### This is supported by a linear correlation coefficient of 0.67.
+### Both of the graph and the correlation coefficient suggest that, in general, as IBU increases, so does ABV.
