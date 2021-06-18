@@ -1,5 +1,14 @@
 ---
 title: "DDS_Project_JR_LM"
+author: "JR"
+date: "6/4/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+---
+title: "DDS_Project_JR_LM"
 author: "Jeff Reed, Logan Miller"
 date: "6/10/2021"
 output: 
@@ -8,6 +17,12 @@ output:
   pdf_document:
     toc: true
 ---
+
+# Introduction
+# Reed and Miller Consulting has been hired by Budweiser to perform data analytics in order to aid in their business decision making process.  We have received specific information regarding various types of beers as well as breweries in the United States which will be used to conduct our analysis.  We have also been given specific questions that we will seek to answer and will also strive to report back other interesting insights that may be deemed pertinent and useful to their business.
+
+# Code purpose
+# The code below is broken down into 2 categories.  The information preceded by # is explanatory information while the other information located in the "code chunks" is the actual code used to perform our data analysis.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -19,7 +34,6 @@ knitr::opts_chunk$set
 
 ## Import Relevant Packages
 ```{r}
-
 library(ggplot2) 
 library(magrittr) 
 library(dplyr) 
@@ -30,16 +44,12 @@ library(caret)
 library(e1071)
 library(readr)
 library(ggthemes)
-
 ```
 
 ## Load Data
-
 ```{r results='hide'}
 Breweries = read.csv(file.choose())
-
 Beers = read.csv(file.choose())
-
 ```
 
 ## Inspect Data
@@ -56,19 +66,13 @@ Breweries %>% count(State, sort = TRUE)
 ## Merging beer data with brewery data
 ```{r}
 # Change column name in Brewery file to clarify names
-
 Beers = Beers %>% rename(Beer_Name = Name, Brew_ID = Brewery_id)
-
 colnames(Breweries)[2] = "Brewery_Name" 
-
 Beer_Brew_Combo = merge(Beers,Breweries,c("Brew_ID")) 
-
-
 ```
 
 ## First and last 6 rows
 ```{r}
-
 head(Beer_Brew_Combo, 6)
 tail(Beer_Brew_Combo, 6)
 ```
@@ -78,16 +82,21 @@ tail(Beer_Brew_Combo, 6)
 ```{r}
 sapply(Beer_Brew_Combo, function(x) sum(is.na(x)))
 ```
-### We can see that only the ABV and IBU columns have missing values. For now we will keep them in but they may need to be filtered out later to avoid misleading results.
+## We can see that only the ABV and IBU columns have missing values.  
+
+## What will be done with this data?  
+## Randomness of NA’s warrants caution in removing all rows with NA’s
+## NA’s will be removed only when we are analyzing data in the ABV and IBU columns
+## Otherwise, we are removing valuable data unnecessarily
+
 
 ## Computing and plotting median ABV and IBU
 ```{r}
+BBC_Median_ABV = Beer_Brew_Combo %>% filter(!is.na(ABV)) %>% group_by(State) %>% summarise_at(vars(ABV),list(name = median)) %>% rename(Median_ABV = name)
 
+BBC_Median_IBU = Beer_Brew_Combo %>% filter(!is.na(IBU)) %>% group_by(State) %>% summarise_at(vars(IBU),list(name = median)) %>% rename(Median_IBU = name)
 
-ABV_IBU_Medians = Beer_Brew_Combo %>% 
-  group_by (State) %>% 
-  summarise(Median_ABV = median(ABV, na.rm = TRUE), # na.rm filters out the missing values when computing value
-            Median_IBU = median(IBU, na.rm = TRUE)) 
+ABV_IBU_Medians = merge(BBC_Median_ABV,BBC_Median_IBU,c("State"))
 
 ABV_IBU_Medians %>% 
   ggplot(aes(x = reorder(State, -Median_ABV,), y = Median_ABV)) + 
@@ -95,7 +104,6 @@ ABV_IBU_Medians %>%
   labs(x = 'State', y = 'Median ABV', title = 'Median ABV by State') +
   theme_economist() +
   theme(legend.position = 'none', axis.text.x = element_text(angle = 270, hjust = 1)) 
-
 ABV_IBU_Medians %>% 
   ggplot(aes(x = reorder(State, -Median_IBU,), y = Median_IBU)) + 
   geom_bar(stat = 'identity', fill = 'dark green') +
@@ -115,19 +123,16 @@ Beer_Brew_Combo %>% arrange(-IBU) %>% select(Beer_Name, IBU, State) %>% head(1)
 ## Comment on the summary statistic and distribution of the ABV variable
 ```{r}
 summary(Beer_Brew_Combo$ABV)
-
 data.frame(Mean = round(mean(Beer_Brew_Combo$ABV, na.rm = TRUE), 3), 
            Trimmed_Mean = round(mean(Beer_Brew_Combo$ABV, na.rm = TRUE, trim = 0.1), 3),
            Median = median(Beer_Brew_Combo$ABV, na.rm = TRUE),
            Standard_Deviation = round(sd(Beer_Brew_Combo$ABV, na.rm = TRUE), 3))
-
 Beer_Brew_Combo %>% 
   ggplot(aes(x = ABV)) + 
   geom_histogram(fill = 'dark green', color = 'black') +
   labs(x = 'ABV', y = '',  title = 'Histogram of ABV') +
   theme_economist() +
   theme(axis.text.y = element_blank(), axis.title.x = element_text(size = 15),legend.position = 'none')
-
 Beer_Brew_Combo %>% 
   ggplot(aes(x = ABV)) + 
   geom_boxplot(fill = 'dark green', color = 'black') +
@@ -141,9 +146,7 @@ Beer_Brew_Combo %>%
 
 ## Is there a relationship between IBU and ABV?
 ```{r}
-
 cor(x = Beer_Brew_Combo$IBU, y = Beer_Brew_Combo$ABV, method = 'pearson', use = 'na.or.complete')
-
 Beer_Brew_Combo %>% 
   ggplot(aes(x = IBU, y = ABV)) +
   geom_point(color = 'dark green') +
@@ -155,3 +158,78 @@ Beer_Brew_Combo %>%
 ### Based on a visual inspection of the scatter plot, there appears to be a slight positive correlation between IBU and ABV.
 ### This is supported by a linear correlation coefficient of 0.67.
 ### Both of the graph and the correlation coefficient suggest that, in general, as IBU increases, so does ABV.
+
+
+
+## Additional Insight for Budweiser:
+## Question of interest:  Given the beer market is very saturated in the US, what parts of the country should you think about prioritizing as it pertains to increasing sales penetration?  Which region to focus on?  And which states to focus on?
+
+## Load the Region csv file which we pulled in from our database which we thought would be additive for our client and the info they provided
+```{r}
+Region = read.csv(file.choose(), header = TRUE)
+summary(Region)
+```
+
+## merge Breweries data frames with Region
+```{r}
+Brew_Region = merge(Breweries, Region,c("State"))
+```
+## Count breweries by region
+```{r}
+BR_R = Brew_Region %>% count(Region, sort = TRUE)
+colnames(BR_R)[2] = "Breweries"
+summary(BR_R)
+```
+
+## Merge Beers data frames with Region
+```{r}
+Beer_State = select(Beer_Brew_Combo, Beer_ID, State)
+Beers_Region = merge(Beer_State, Region,c("State"))
+```
+## Count beers by region
+```{r}
+BE_R = Beers_Region %>% count(Region, sort = TRUE)
+colnames(BE_R)[2] = "Beers"
+summary(BE_R)
+```
+# Merge dataframes together in order to calculate and assess beers to number of breweries ratio
+```{r}
+BR_BE_Region = merge(BR_R, BE_R, c("Region"))
+BR_BE_Region$Beers_to_Breweries = BR_BE_Region$Beers / BR_BE_Region$Breweries 
+print(BR_BE_Region)
+BR_BE_Region %>% 
+  ggplot(aes(x = reorder(Region, Beers_to_Breweries), y = Beers_to_Breweries)) + 
+  geom_bar(stat = 'identity', fill = 'dark green') +
+  labs(x = 'State', y = 'Ratio', title = 'Beers to Breweries Ratio by Region') +
+  theme_economist() +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 270, hjust = 1))
+```
+## Ratio of number of beers to number of breweries is most favorable in South Region thus we recommend to focusing new products in this less saturated market with favorable demographic trends
+
+## Conduct similar analysis on a state basis within the South Region
+```{r}
+South_Beers = Beers_Region %>% filter(Region == "South Region")
+summary(South_Beers)
+South_Brew = Brew_Region %>% filter(Region == "South Region")
+summary(South_Brew)
+
+BE_South = South_Beers %>% count(State, sort = TRUE)
+colnames(BE_South)[2] = "Beers"
+summary(BE_South)
+BR_South = South_Brew %>% count(State, sort = TRUE)
+colnames(BR_South)[2] = "Breweries"
+summary(BR_South)
+
+BR_BE_South = merge(BR_South, BE_South, c("State"))
+BR_BE_South$Beers_to_Breweries = BR_BE_South$Beers / BR_BE_South$Breweries 
+print(BR_BE_South)
+BR_BE_South %>% 
+  ggplot(aes(x = reorder(State, Beers_to_Breweries), y = Beers_to_Breweries)) + 
+  geom_bar(stat = 'identity', fill = 'dark green') +
+  labs(x = 'State', y = 'Ratio', title = 'Beers to Breweries Ratio by State - South Region') +
+  theme_economist() +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 270, hjust = 1))
+
+write.table(BR_BE_South, "clipboard", sep="\t", row.names=FALSE)
+```
+## Considering Beers to Breweries ratio and number of breweries, we recommend initially focusing sales penetration efforts on North Caroline and Virginia.
